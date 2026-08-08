@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Encroachment Detection Dashboard (Prototype)</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #1c1c1c; color: #eee; margin:0; padding:20px; }
+  h1 { text-align:center; font-size: 18px; color:#9fd8ff; letter-spacing: 0.5px; }
+  .sub { text-align:center; color:#888; font-size:12px; margin-top:-8px; margin-bottom:16px; }
+  .panels { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .panel { background:#111; border:1px solid #333; border-radius:8px; padding:10px; flex:1; min-width:280px; }
+  .panel h2 { font-size:13px; text-align:center; margin:4px 0 10px; letter-spacing:1px; color:#ccc; }
+  img { width:100%; border-radius:4px; display:block; background:#000; min-height:220px; }
+  .results-list div { margin:8px 0; font-size:14px; display:flex; justify-content:space-between; border-bottom:1px solid #222; padding-bottom:6px; }
+  .label { color:#9aa; }
+  .value { font-weight:bold; }
+  .ALERT { color:#ff5b5b; }
+  .SUSPICIOUS { color:#ffcf5b; }
+  .LOW { color:#5bff8f; }
+  .events { margin-top:16px; max-width:960px; margin-left:auto; margin-right:auto; }
+  .events table { width:100%; border-collapse: collapse; font-size:13px; }
+  .events th, .events td { border-bottom:1px solid #333; padding:6px 8px; text-align:left; }
+  .events th { color:#9fd8ff; }
+</style>
+</head>
+<body>
+<h1>AI-BASED LAND ENCROACHMENT DETECTION SYSTEM</h1>
+<div class="sub">Prototype mode — real camera, simulated ESP32 sensor data</div>
+
+<div class="panels">
+  <div class="panel">
+    <h2>LIVE CAMERA FEED</h2>
+    <img src="/video_feed">
+  </div>
+  <div class="panel">
+    <h2>AI DETECTION OUTPUT</h2>
+    <img src="/video_feed_detected">
+  </div>
+  <div class="panel">
+    <h2>DETECTION RESULTS</h2>
+    <div class="results-list" id="results">Loading...</div>
+  </div>
+</div>
+
+<div class="events">
+  <h2 style="font-size:13px;color:#ccc;letter-spacing:1px;">RECENT EVENTS</h2>
+  <table id="eventsTable">
+    <thead>
+      <tr><th>Time</th><th>Object</th><th>Fusion</th><th>Encroach %</th><th>ESI</th><th>Severity</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+async function refreshStatus() {
+  const res = await fetch('/api/status');
+  const data = await res.json();
+  const status = data.fusion.status || 'LOW';
+  document.getElementById('results').innerHTML = `
+    <div><span class="label">Fusion score</span><span class="value">${data.fusion.fusion_score ?? 0}%</span></div>
+    <div><span class="label">Status</span><span class="value ${status}">${status}</span></div>
+    <div><span class="label">Encroachment %</span><span class="value">${data.affected_percent ?? 0}%</span></div>
+    <div><span class="label">Severity (ESI)</span><span class="value">${data.esi.esi ?? 0} (${data.esi.level ?? '-'})</span></div>
+    <div><span class="label">PIR motion</span><span class="value">${data.sensor_data.pir ? 'YES' : 'no'}</span></div>
+    <div><span class="label">Distance</span><span class="value">${data.sensor_data.distance_cm ?? '-'} cm</span></div>
+    <div><span class="label">Vibration</span><span class="value">${data.sensor_data.vibration ?? '-'}</span></div>
+    <div><span class="label">Zone</span><span class="value">${data.zone}</span></div>
+  `;
+}
+
+async function refreshEvents() {
+  const res = await fetch('/api/events');
+  const events = await res.json();
+  const tbody = document.querySelector('#eventsTable tbody');
+  tbody.innerHTML = events.map(e => `
+    <tr>
+      <td>${e.timestamp}</td>
+      <td>${e.object_type}</td>
+      <td>${e.fusion_score}</td>
+      <td>${e.affected_percent}%</td>
+      <td>${e.esi}</td>
+      <td>${e.severity_level}</td>
+    </tr>
+  `).join('');
+}
+
+setInterval(refreshStatus, 1000);
+setInterval(refreshEvents, 3000);
+refreshStatus();
+refreshEvents();
+</script>
+</body>
+</html>
