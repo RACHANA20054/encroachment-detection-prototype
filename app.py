@@ -176,12 +176,20 @@ def index():
 
 @app.route("/video_feed")
 def video_feed():
-    return Response(gen_frames(False), mimetype="multipart/x-mixed-replace; boundary=frame")
+    resp = Response(gen_frames(False), mimetype="multipart/x-mixed-replace; boundary=frame")
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 @app.route("/video_feed_detected")
 def video_feed_detected():
-    return Response(gen_frames(True), mimetype="multipart/x-mixed-replace; boundary=frame")
+    resp = Response(gen_frames(True), mimetype="multipart/x-mixed-replace; boundary=frame")
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 @app.route("/api/status")
