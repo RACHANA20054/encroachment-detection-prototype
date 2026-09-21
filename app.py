@@ -11,7 +11,7 @@ TO SWITCH FROM MOCK SENSORS TO YOUR REAL ESP32:
     Change the import below from:
         from sensors.mock_sensors import read_all
     to:
-        from sensors.esp32_sensors import read_all
+        from sensors.mock_sensors import read_all
     (and set ESP32_IP inside sensors/esp32_sensors.py first)
 """
 import cv2
@@ -21,7 +21,7 @@ from flask import Flask, Response, jsonify, render_template
 
 from detection.yolo_detector import detect_objects, box_in_roi, encroachment_percentage
 from fusion.fusion_engine import fuse, severity_index
-from sensors.esp32_sensors import read_all
+from sensors.mock_sensors import read_all
 from database.db import init_db, log_event, get_recent_events
 
 app = Flask(__name__)
@@ -69,7 +69,7 @@ class CameraStream:
         self.cap.release()
 
 
-camera = CameraStream(0)
+camera = CameraStream(1)  # Samsung S25 via DroidCam/OBS Virtual Camera
 
 latest_state = {
     "detections": [],
@@ -84,11 +84,14 @@ _present_since = None
 
 
 def object_risk_score(detections):
-    if any(d["label"] == "person" for d in detections):
-        return 0.9
-    if any(d["label"] in ("car", "truck", "motorcycle") for d in detections):
-        return 0.7
-    return 0.3 if detections else 0.0
+    labels = {d["label"] for d in detections}
+    if "encroacher" in labels:
+        return 1.0
+    if "owner" in labels:
+        return 0.6
+    if labels.intersection({"cement_bag", "brick", "cement_block", "foundation_block"}):
+        return 0.5
+    return 0.0
 
 
 def process_loop():
@@ -196,7 +199,7 @@ if __name__ == "__main__":
     t = threading.Thread(target=process_loop, daemon=True)
     t.start()
     try:
-        app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
+        app.run(host="0.0.0.0", port=5001, debug=False, threaded=True)
     finally:
         camera.release()
         print("Camera released. Goodbye.")

@@ -4,3 +4,10 @@ __pycache__/
 *.db
 *.pt
 .vscode/
+runs/
+dataset/
+dataset_clean/
+dataset_clean_v4_additions/
+.DS_Store
+.app.py.swp
+complete_dataset.zip
