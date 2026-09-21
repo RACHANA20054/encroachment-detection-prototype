@@ -21,11 +21,15 @@
   .events table { width:100%; border-collapse: collapse; font-size:13px; }
   .events th, .events td { border-bottom:1px solid #333; padding:6px 8px; text-align:left; }
   .events th { color:#9fd8ff; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold; margin-left:6px; vertical-align:middle; }
+  .badge-live   { background:#1a4d2e; color:#5bff8f; border:1px solid #5bff8f; }
+  .badge-cached { background:#4d1a1a; color:#ff5b5b; border:1px solid #ff5b5b; }
+  .badge-none   { background:#333;    color:#aaa;    border:1px solid #555; }
 </style>
 </head>
 <body>
 <h1>AI-BASED LAND ENCROACHMENT DETECTION SYSTEM</h1>
-<div class="sub">Prototype mode — real camera, simulated ESP32 sensor data</div>
+<div class="sub">Prototype mode</div>
 
 <div class="panels">
   <div class="panel">
@@ -37,7 +41,7 @@
     <img src="/video_feed_detected">
   </div>
   <div class="panel">
-    <h2>DETECTION RESULTS</h2>
+    <h2>DETECTION RESULTS <span id="srcBadge" class="badge badge-none">--</span></h2>
     <div class="results-list" id="results">Loading...</div>
   </div>
 </div>
@@ -57,7 +61,15 @@ async function refreshStatus() {
   const res = await fetch('/api/status');
   const data = await res.json();
   const status = data.fusion.status || 'LOW';
+  const src = data.sensor_data.source || 'none';
+
+  // Update the source badge on the panel heading
+  const badge = document.getElementById('srcBadge');
+  badge.className = `badge badge-${src}`;
+  badge.textContent = src === 'live' ? '🟢 LIVE (hardware)' : src === 'cached' ? '🔴 CACHED (no hardware)' : '--';
+
   document.getElementById('results').innerHTML = `
+    <div><span class="label">Sensor source</span><span class="value" style="color:${src==='live'?'#5bff8f':'#ff5b5b'}">${src.toUpperCase()}</span></div>
     <div><span class="label">Fusion score</span><span class="value">${data.fusion.fusion_score ?? 0}%</span></div>
     <div><span class="label">Status</span><span class="value ${status}">${status}</span></div>
     <div><span class="label">Encroachment %</span><span class="value">${data.affected_percent ?? 0}%</span></div>

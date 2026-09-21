@@ -1,6 +1,5 @@
 """
-Runs the full prototype pipeline on your laptop webcam with simulated IoT
-sensor data -- no ESP32 or Raspberry Pi required yet.
+Runs the full detection pipeline on your laptop webcam.
 
 Run:
     pip install -r requirements.txt
@@ -8,9 +7,12 @@ Run:
 
 Then open http://localhost:5000 in your browser.
 
-Once the ESP32 arrives: replace sensors/mock_sensors.py's internals with real
-reads, and swap cv2.VideoCapture(0) for your Pi Camera source when you move
-to the Raspberry Pi. Nothing else needs to change.
+TO SWITCH FROM MOCK SENSORS TO YOUR REAL ESP32:
+    Change the import below from:
+        from sensors.mock_sensors import read_all
+    to:
+        from sensors.esp32_sensors import read_all
+    (and set ESP32_IP inside sensors/esp32_sensors.py first)
 """
 import cv2
 import time
@@ -19,7 +21,7 @@ from flask import Flask, Response, jsonify, render_template
 
 from detection.yolo_detector import detect_objects, box_in_roi, encroachment_percentage
 from fusion.fusion_engine import fuse, severity_index
-from sensors.mock_sensors import read_all
+from sensors.esp32_sensors import read_all
 from database.db import init_db, log_event, get_recent_events
 
 app = Flask(__name__)
@@ -34,8 +36,6 @@ class CameraStream:
     """
     Opens the webcam ONCE and shares frames with anyone who needs them,
     instead of every part of the app opening its own cv2.VideoCapture(0).
-    Multiple simultaneous captures is what was causing the camera to stay
-    busy/on unexpectedly.
     """
     def __init__(self, source=0):
         self.cap = cv2.VideoCapture(source)

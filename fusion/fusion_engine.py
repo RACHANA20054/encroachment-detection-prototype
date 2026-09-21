@@ -1,14 +1,8 @@
 """
 Sensor Fusion Engine + Encroachment Severity Index (ESI).
 
-Combines camera detection, PIR motion, distance, vibration and ROI crossing
-into one weighted confidence score, then computes severity for confirmed
-events.
-
-IMPORTANT: the weights and thresholds below are starting points from the
-project proposal, not scientifically validated values. Tune them against
-your own labelled test scenarios once you have real sensor data -- don't
-present them to examiners as already validated.
+NOTE: weights and thresholds are starting points from the project proposal,
+not scientifically validated -- tune against your own labelled test data.
 """
 
 WEIGHTS = {
@@ -25,7 +19,6 @@ SUSPICIOUS_THRESHOLD = 40
 
 
 def _normalize_distance(distance_cm, near=100, far=500):
-    """Closer objects -> higher suspicion score (0-1)."""
     if distance_cm is None:
         return 0.0
     d = max(near, min(distance_cm, far))
@@ -38,7 +31,7 @@ def fuse(detections, sensor_data, roi_hit, time_present_s=0):
     distance_score = _normalize_distance(sensor_data.get("distance_cm"))
     vibration_score = min(sensor_data.get("vibration", 0.0), 1.0)
     roi_score = 1.0 if roi_hit else 0.0
-    time_score = min(time_present_s / 10.0, 1.0)  # saturates at 10s presence
+    time_score = min(time_present_s / 10.0, 1.0)
 
     score = (
         WEIGHTS["camera"] * camera_score
@@ -71,12 +64,8 @@ def fuse(detections, sensor_data, roi_hit, time_present_s=0):
 
 
 def severity_index(affected_percent, object_risk, duration_s, boundary_penetration, confidence):
-    """
-    ESI = 0.30*Area + 0.25*Object risk + 0.20*Duration + 0.15*Boundary + 0.10*Confidence
-    All inputs normalized 0-1 except affected_percent (0-100).
-    """
     area_norm = min(affected_percent / 100.0, 1.0)
-    duration_norm = min(duration_s / 30.0, 1.0)  # saturates at 30s
+    duration_norm = min(duration_s / 30.0, 1.0)
 
     esi = (
         0.30 * area_norm

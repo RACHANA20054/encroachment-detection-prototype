@@ -1,13 +1,10 @@
 """
 Runs YOLOv8 on a video frame and checks whether detections fall inside the
 Region of Interest (ROI) representing the protected boundary.
-
-Works on a laptop webcam today. Swap the camera source for the Pi Camera
-later (in app.py) without changing anything in this file.
 """
 from ultralytics import YOLO
 
-MODEL_PATH = "yolov8n.pt"  # auto-downloads on first run
+MODEL_PATH = "yolov8n.pt"
 RELEVANT_CLASSES = {"person", "car", "truck", "motorcycle", "bicycle"}
 CONFIDENCE_THRESHOLD = 0.4
 
@@ -41,7 +38,6 @@ def detect_objects(frame):
 
 
 def box_in_roi(box, roi):
-    """Checks if a detection box overlaps the ROI rectangle."""
     bx1, by1, bx2, by2 = box
     rx1, ry1, rx2, ry2 = roi
     ox1, oy1 = max(bx1, rx1), max(by1, ry1)
@@ -54,7 +50,6 @@ def box_in_roi(box, roi):
 
 
 def encroachment_percentage(detections, roi):
-    """Estimated % of the ROI area covered by relevant detected objects."""
     rx1, ry1, rx2, ry2 = roi
     roi_area = max((rx2 - rx1) * (ry2 - ry1), 1)
     covered = 0

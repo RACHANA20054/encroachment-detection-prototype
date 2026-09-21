@@ -1,15 +1,10 @@
 """
 Standalone webcam test -- no Flask, no YOLO, nothing else involved.
 
-Run this FIRST if you're unsure whether your camera itself is working
-before troubleshooting the full app.
-
 Run:
     python test_camera.py
 
 A window should pop up showing your live camera feed. Press 'q' to quit.
-If this doesn't work, the problem is your camera/OpenCV setup, not the
-Flask app or YOLO.
 """
 import cv2
 
